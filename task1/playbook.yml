@@ -4,6 +4,9 @@
 ---
 - hosts: all
   become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
   vars_files:
     - vars/default.yml
 
@@ -61,8 +64,9 @@
       pip:
         executable: pip3
         name: 
-          - flask
+          - setuptools
           - python-magic
+          - flask
 
     - name: Set up Apache virtualhost
       template:
