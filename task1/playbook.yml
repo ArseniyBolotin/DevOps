@@ -1,0 +1,100 @@
+##################################################
+# DO Community Playbooks: Apache on Ubuntu 18.04
+##################################################
+---
+- hosts: all
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+  vars_files:
+    - vars/default.yml
+
+  tasks:
+    - name: Install prerequisites
+      apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
+      loop: [ 'aptitude' ]
+
+    - name: Install Apache
+      apt: name=apache2 update_cache=yes state=latest
+
+    - name: Create static root
+      file:
+        path: "/var/www/{{ static }}"
+        state: directory
+        owner: "{{ app_user }}"
+        mode: '0755'
+
+    - name: Copy index test page
+      template:
+        src: "files/index.html.j2"
+        dest: "/var/www/{{ static }}/index.html"
+    
+    - name: Create dynamic root
+      file:
+        path: "/var/www/{{ dynamic }}"
+        state: directory
+        owner: "{{ app_user }}"
+        mode: '0755'
+    
+    - name: Copy dynamic py
+      template:
+        src: "minimal.py"
+        dest: "/var/www/{{ dynamic }}/minimal.py"
+    
+    - name: Copy dynamic wsgi
+      template:
+        src: "minimal.wsgi"
+        dest: "/var/www/{{ dynamic }}/minimal.wsgi"
+    
+    - name: apt install
+      become: true
+      become_user: root
+      apt:
+        name:
+          - apache2
+          - apache2-utils
+          - libexpat1
+          - ssl-cert
+          - libapache2-mod-uwsgi
+          - libapache2-mod-wsgi-py3
+          - python3-pip
+
+    - name: pip install
+      pip:
+        executable: pip3
+        name: 
+          - setuptools
+          - python-magic
+          - flask
+
+    - name: Set up Apache virtualhost
+      template:
+        src: "files/apache.conf.j2"
+        dest: "/etc/apache2/sites-available/{{ http_conf }}"
+
+    - name: Enable new site
+      shell: /usr/sbin/a2ensite {{ http_conf }}
+      notify: Reload Apache
+
+    - name: Disable default Apache site
+      shell: /usr/sbin/a2dissite 000-default.conf
+      when: disable_default
+      notify: Reload Apache
+
+    - name: "UFW - Allow HTTP on port {{ http_port }}"
+      ufw:
+        rule: allow
+        port: "{{ http_port }}"
+        proto: tcp
+
+  handlers:
+    - name: Reload Apache
+      service:
+        name: apache2
+        state: reloaded
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted

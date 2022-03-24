@@ -1,0 +1,21 @@
+<VirtualHost *:{{ http_port }}>
+    ServerName my.minimal
+    DocumentRoot /var/www/
+    WSGIDaemonProcess minimal user=vagrant group=vagrant threads=5
+    WSGIScriptAlias /dynamic /var/www/minimal/minimal.wsgi
+ 
+    Alias /static "/var/www/static"
+    <Directory "/var/www/static">  
+        Options +Indexes  
+        AllowOverride None  
+        Order allow,deny  
+        Allow from all  
+    </Directory>
+    
+    <Directory "/var/www/minimal/">
+        WSGIProcessGroup minimal
+        WSGIApplicationGroup %{GLOBAL}
+        WSGIScriptReloading On
+        Require all granted
+    </Directory>
+</VirtualHost>

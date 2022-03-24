@@ -1,0 +1,7 @@
+---
+app_user: "vagrant"
+static: "static"
+dynamic: "minimal"
+http_conf: "your_domain.conf"
+http_port: "80"
+disable_default: true
