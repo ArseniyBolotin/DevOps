@@ -1,0 +1,48 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the task-ci branch
+  push:
+    branches: [ task-ci ]
+  pull_request:
+    branches: [ task-ci ]
+
+env:
+  GOOGLE_TEST_DIR: googletest
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  gtest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: setup
+      run: mkdir task-ci/3rdparty && mkdir task-ci/build
+    - name: clone gtest
+      run: git clone https://github.com/google/googletest.git && mv googletest task-ci/3rdparty
+    - name: Build
+      run: cd task-ci/build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Werror" ..
+    - name: make
+      run: cd task-ci/build && make
+    - name: Test
+      uses: akhtyamovpavel/ActionGtestReport@v0.0.9
+      with:
+        working-directory: ./task-ci/bin
+        exec-path: ./CTestExe
+        report-path: ./report.xml
+    - name: UploadArtifacts
+      uses: actions/upload-artifact@v2
+      with:
+        path: |
+          task-ci/bin
+          task-ci/lib
+        name: Distributive  
+    - name: UploadTestReport
+      uses: actions/upload-artifact@v2
+      with:
+        path: ./task-ci/bin/report.xml
+        name: test-report
