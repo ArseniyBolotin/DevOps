@@ -24,7 +24,7 @@ jobs:
       run: mkdir task-ci/3rdparty && mkdir task-ci/build
     - name: clone gtest
       run: git clone https://github.com/google/googletest.git && mv googletest task-ci/3rdparty
-    - name: configure
+    - name: Build
       run: cd task-ci/build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Werror" ..
     - name: make
       run: cd task-ci/build && make
